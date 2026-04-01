@@ -1,5 +1,6 @@
 # Log Parser
 >Parsing log output on N threads
+
 A simple log parser that runs on a queue using N concurrent threads.
 **Log:** `loghub Linux` - A collection of `/var/log/messages` on a linux server over a period of 260+ days.
 
@@ -7,7 +8,15 @@ A simple log parser that runs on a queue using N concurrent threads.
 - The main thread reeads `log` and pushes to a shared queue
 - The main spawns *N* worker threads
 - Each *N*th workr reads from queue:
-  - Parse log entries
+  - Parse log entries, for each log entry extract:
+    - Day, month and time
+    - Host, PID and component
+    - Severity and message
+  - Infer the following from all log entries.
+    - Range of timestamp
+    - Severity of errors - total count of errors and warns #v0.1
+    - Error percentage - Total count of errors #v0.1
+    - Time distribution - Which hour was the busiest #v0.2
 - Threads will be be coordinated with *mutex* and *condition variables*.
 - Pipe parsed data to:
   - `stdout`.
@@ -32,12 +41,89 @@ A simple log parser that runs on a queue using N concurrent threads.
 - Run parsing function
 - Append parsed information to Result field
 - When main signals completeion and done flag is set, exit gracefully.
+
 ### Components 
+###### Main module
+- Main module
+```C
+/**
+* @brief main function
+
+int main(int args, char *argsv[]);
+```
+###### Thread module
+```C
+/**
+* @brief main function
+
+int main(int args, char *argsv[]);
+```
+###### Parser modules
+- 
+```C
+/**
+* @brief main function
+
+int main(int args, char *argsv[]);
+```
+###### Helper modules
+- 
+```C
+/**
+* @brief main function
+
+int main(int args, char *argsv[]);
+```
 ### Data Structures
+
 ###### Working Queue
-###### Thread Arguments
+ A dynamically growing queue, implemented using a linked list.
+- Linked list node:
+```C
+typedef struct Node {
+    char *line; /**< Queue input, line to be parsed */ 
+    struct Node *next; /**< Points to next field */ 
+} Node;
+```
+- Working Queue
+```C
+typedef struct __workQueue_t {
+    struct Node *head; /**< Points to start of list */
+    struct Node *tail; /**< Points to end of list */
+    int size; /**< Size of list */
+    pthread_mutex_lock lock; /**< Thread lock */
+    pthread_cond_t cond; /**< Thread condition signal */
+    int flag; /**< Done flag, 1 - done, 0 - not done */
+} workQueue_t;
+```
+
 ###### Parsed Data
-### Worker Architecture 
+Multi-field struct to hold parsed data
+```C
+typedef __report_t {
+   char timestamp_range; /**< The time range of the log*/
+   int total_log; /**< Amount of total log entries */
+   int errors; /**< Amount of errors */
+   int warn; /**< Amount of warns */
+   int info; /**< Amount of infos */
+   int error_percentage; /**< Error Percentage */
+} report;
+```
+- A log entry
+```C
+typedef struct __log_entry_t {
+    char month[4];
+    int day;
+    char time[9];
+    char host[64];
+    char component[64];
+    int pid;
+    char message[256];
+    char severity[64];
+} log_entry_t;
+```
+- 
+### Worker Responsiblity/ownership 
 ### File Organization
 
 ### Version controls
