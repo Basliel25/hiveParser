@@ -48,33 +48,63 @@ A simple log parser that runs on a queue using N concurrent threads.
 ```C
 /**
 * @brief main function
-
-int main(int args, char *argsv[]);
+* @return Exit code - 0
+*/
+int main();
 ```
+
 ###### Thread module
 ```C
 /**
-* @brief main function
-
-int main(int args, char *argsv[]);
+* @brief Thread running function
+* @param void *arg the working queue
+*/
+void *worker_thread(void *arg);
 ```
 ###### Parser modules
-- 
+ 
+ - Extract details about the file
 ```C
 /**
-* @brief main function
+* @brief module to extract details from a parsed line
+* @param char *line - Entry from log to be processed
+* @return log_entry_t struct with organized data about entry
+*/
 
-int main(int args, char *argsv[]);
+log_entry_t extract_entry(char *line);
 ```
 ###### Helper modules
-- 
+- Catagorize severity
+
 ```C
 /**
-* @brief main function
+* @brief Function to catagorize severity
+* @param char message - The message section of a log entry
+* @return char severity The severity of the message
+*/
 
-int main(int args, char *argsv[]);
+char severity(char message);
 ```
+
+- Update Report field
+
+```C
+/**
+* @brief Function to update report field
+* @param char message - The message section of a log entry
+* @return char severity The severity of the message
+*/
+
+void report_update(log_entry_t *entry, report_t *report);
+```
+
+
 ### Data Structures
+
+- Number of threads to use
+```C
+static const int NUMTHREADS;
+```
 
 ###### Working Queue
  A dynamically growing queue, implemented using a linked list.
