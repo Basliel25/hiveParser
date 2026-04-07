@@ -45,13 +45,17 @@ log_entry_t *extract_entry(char *line) {
     token = strtok(NULL,"]");
     log_entry->pid = token;
 
-    // Last Entry is PID
+    // Last Entry is message
     token = strtok(NULL,":");
+    // Severity
     log_entry->message = token;
 
-    // Severity
-    char *sever = severity(token);
-    log_entry->severity = sever;
+    if(log_entry->message == NULL)
+        log_entry->severity = NULL;
+    else {
+        char *sever = severity(log_entry->message);
+        log_entry->severity = sever;
+    }
 
     return log_entry;
 }

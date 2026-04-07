@@ -1,76 +1,82 @@
+#include <string.h>
 #include "logParse.h"
 #include "log_parser/parser.h"
+
+static const int NUMTHREADS = 4;
 
 int main() {
    FILE *log = fopen("log_data/data.log", "r"); 
 
+   workQueue_t *work_Queue = malloc(sizeof(workQueue_t));
+   memset(work_Queue, 0, sizeof(workQueue_t)); 
+
+   pthread_mutex_t *lock;
+   pthread_mutex_init(&work_Queue->lock, NULL);
+
+   pthread_t thread[NUMTHREADS];
+
+   Node *tail = NULL; 
+   Node *head = NULL;
+
+   work_Queue->size = 0;
+   work_Queue->head = head;
+   work_Queue->tail = tail;
+   work_Queue->flag = 0;
+
+
    if (log == NULL) {
     perror("Error opening file");
     return 1;
-}
+   }
+
    char buffer[1024];  // Fixed size buffer
    while (fgets(buffer, sizeof(buffer), log) != NULL) {
-       log_entry_t *entry = extract_entry(buffer);
-       printf("%s\n", entry->message);
-       printf("%s\n", entry->severity);
-       free(entry);
+       char *line = strdup(buffer);
+       enqueue(work_Queue, line);
    }
+   printf("Size is of queue is at %d\n", work_Queue->size);
+   worker_thread((void *) work_Queue);
    fclose(log);
 }
 
-char *severity(char *message) {
-    //Convert the message into lowercase
-    for(int i = 0; message[i]; i++)
-        message[i] = (unsigned char)tolower(message[i]);
+void enqueue(workQueue_t *queue, char *line) {
+    Node *new_node = malloc(sizeof(Node));
+    new_node->line = line;
+    new_node->next = NULL;
 
-    if(strstr(message, "error"))  {return "Error";}
-    if(strstr(message, "authentication failure")) {return "Auth Failure";}
-    if(strstr(message, "succee")) {return "Successus";}
-    if(strstr(message, "connect")) {return "Connection Successful";}
-    if(strstr(message, "alert")) {return "alert";}
-    else {return "None";}
+    if(!queue->tail) {
+        queue->tail = queue->head = new_node;
+    } else {
+        queue->tail->next = new_node;
+        queue->tail = new_node;
+    }
 
-    return "/0";
+    queue->size++;
 }
 
-log_entry_t *extract_entry(char *line) {
-    log_entry_t *log_entry = malloc(sizeof(log_entry_t));
+char *dequeue(workQueue_t *queue) {
 
-    // Tokenize input
-    char *token = strtok(line, " ");
-    
-    // First input is month
-    log_entry->month = token;
+    Node *node = queue->head;
+    if(queue->size == 0) return NULL;
+    queue->head = queue->head->next;
 
-    // Second input is date
-    token = strtok(NULL," ");
-    log_entry->day = token;
+    if (!queue->head) queue->tail = NULL;
+    queue->size--;
 
-    // Third input is timestamp
-    token = strtok(NULL," ");
-    log_entry->timestamp = token;
-
-    // Fourth input is host
-    token = strtok(NULL," ");
-    log_entry->host = token;
-
-    // Next input is component
-    // New delimeter
-    token = strtok(NULL,"[");
-    log_entry->component = token;
-
-    // Next Entry is PID
-    token = strtok(NULL,"]");
-    log_entry->pid = token;
-
-    // Last Entry is PID
-    token = strtok(NULL,":");
-    log_entry->message = token;
-
-    // Severity
-    char *sever = severity(token);
-    log_entry->severity = sever;
-
-    return log_entry;
+    char *line = node->line;
+    return line;
 }
 
+
+void *worker_thread(void *arg) {
+    workQueue_t *work_queue = (workQueue_t *)arg;
+    char *line;
+
+    while((line = dequeue(work_queue)) != NULL) {
+        log_entry_t *entry = extract_entry(line);
+        printf("Parsing: %s\n", entry->pid);
+        free(entry);
+        free(line);
+    }
+    return NULL;
+}
