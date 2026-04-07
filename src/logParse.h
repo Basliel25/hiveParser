@@ -3,7 +3,10 @@
 
 #include <stddef.h>
 #include <pthread.h>
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
 
 /**
 ************************
@@ -15,14 +18,14 @@
 * @brief Log entry 
 */
 typedef struct __log_entry_t {
-    char month[4];
-    int day;
-    char time[9];
-    char host[64];
-    char component[64];
-    int pid;
-    char message[256];
-    char severity[64];
+    char *month;
+    char *day;
+    char *timestamp;
+    char *host;
+    char *component;
+    char *pid;
+    char *message;
+    char *severity;
 } log_entry_t;
 
 /**
@@ -68,20 +71,20 @@ typedef struct __report_t {
 * @param void *arg the working queue
 */
 void *worker_thread(void *arg);
+/**
+ * @brief Function to catagorize severity
+ * @param char message - The message section of a log entry
+ * @return char severity The severity of the message
+ */
+char *severity(char *message);
 
 /**
 * @brief module to extract details from a parsed line
 * @param char *line - Entry from log to be processed
 * @return log_entry_t struct with organized data about entry
 */
-log_entry_t extract_entry(char *line);
+log_entry_t *extract_entry(char *line);
 
-/**
-* @brief Function to catagorize severity
-* @param char message - The message section of a log entry
-* @return char severity The severity of the message
-*/
-char severity(char message);
 
 /**
 * @brief Function to update report field
