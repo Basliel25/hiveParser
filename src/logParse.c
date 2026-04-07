@@ -2,7 +2,13 @@
 #include "logParse.h"
 #include "log_parser/parser.h"
 
+// Number of working threads
 static const int NUMTHREADS = 4;
+
+typedef struct {
+    int thread_id;
+    workQueue_t *queue;
+} thread_args_t;
 
 int main() {
    FILE *log = fopen("log_data/data.log", "r"); 
@@ -10,8 +16,6 @@ int main() {
    workQueue_t *work_Queue = malloc(sizeof(workQueue_t));
    memset(work_Queue, 0, sizeof(workQueue_t)); 
 
-   pthread_mutex_t *lock;
-   pthread_mutex_init(&work_Queue->lock, NULL);
 
    pthread_t thread[NUMTHREADS];
 
@@ -22,7 +26,12 @@ int main() {
    work_Queue->head = head;
    work_Queue->tail = tail;
    work_Queue->flag = 0;
+   pthread_mutex_init(&work_Queue->lock, NULL);
+   pthread_cond_init(&work_Queue->cond, NULL);
 
+   // **************
+   // Populate Queue
+   // **************
 
    if (log == NULL) {
     perror("Error opening file");
@@ -30,13 +39,42 @@ int main() {
    }
 
    char buffer[1024];  // Fixed size buffer
+
+
    while (fgets(buffer, sizeof(buffer), log) != NULL) {
        char *line = strdup(buffer);
+       pthread_mutex_lock(&work_Queue->lock);
        enqueue(work_Queue, line);
+       pthread_cond_signal(&work_Queue->cond);
+       pthread_mutex_unlock(&work_Queue->lock);
    }
+
    printf("Size is of queue is at %d\n", work_Queue->size);
-   worker_thread((void *) work_Queue);
+   // ****************
+   // Spin work Threads
+   // ****************
+   for(int i = 0; i < NUMTHREADS; i++) {
+       thread_args_t *args = malloc(sizeof(thread_args_t));
+       args->thread_id = i;
+       args->queue = work_Queue;
+       pthread_create(&thread[i], NULL, worker_thread, (void *)args);
+   }
    fclose(log);
+
+   // Signal workers that no more work is coming
+   pthread_mutex_lock(&work_Queue->lock);
+   work_Queue->flag = 1;
+   pthread_cond_broadcast(&work_Queue->cond);
+   pthread_mutex_unlock(&work_Queue->lock);
+
+   // Wait for all workers to finish
+   for(int i = 0; i < NUMTHREADS; i++) {
+       pthread_join(thread[i], NULL);
+   }
+
+   printf("All workers finished\n");
+   free(work_Queue);
+   return 0;
 }
 
 void enqueue(workQueue_t *queue, char *line) {
@@ -44,13 +82,13 @@ void enqueue(workQueue_t *queue, char *line) {
     new_node->line = line;
     new_node->next = NULL;
 
+    // Caller holds the lock - just manipulate the queue
     if(!queue->tail) {
         queue->tail = queue->head = new_node;
     } else {
         queue->tail->next = new_node;
         queue->tail = new_node;
     }
-
     queue->size++;
 }
 
@@ -59,7 +97,6 @@ char *dequeue(workQueue_t *queue) {
     Node *node = queue->head;
     if(queue->size == 0) return NULL;
     queue->head = queue->head->next;
-
     if (!queue->head) queue->tail = NULL;
     queue->size--;
 
@@ -69,14 +106,36 @@ char *dequeue(workQueue_t *queue) {
 
 
 void *worker_thread(void *arg) {
-    workQueue_t *work_queue = (workQueue_t *)arg;
+    thread_args_t *args = (thread_args_t *)arg;
+    int tid = args->thread_id;
+    workQueue_t *work_queue = args->queue;
     char *line;
 
-    while((line = dequeue(work_queue)) != NULL) {
+    printf("[Worker %d] Starting\n", tid);
+
+    while(1) {
+        pthread_mutex_lock(&work_queue->lock);
+
+        // Wait until work arrives OR done flag is set
+        while (work_queue->size == 0 && !work_queue->flag) {
+            pthread_cond_wait(&work_queue->cond, &work_queue->lock);
+        }
+
+        // If queue still empty and done, exit
+        if (work_queue->size == 0 && work_queue->flag) {
+            pthread_mutex_unlock(&work_queue->lock);
+            printf("[Worker %d] Exiting\n", tid);
+            break;
+        }
+        line = dequeue(work_queue);
+        pthread_mutex_unlock(&work_queue->lock);
+        
         log_entry_t *entry = extract_entry(line);
-        printf("Parsing: %s\n", entry->pid);
+        printf("[Worker %d] Processed pid: %s\n", tid, entry->pid);
         free(entry);
         free(line);
     }
+    
+    free(args);
     return NULL;
 }
