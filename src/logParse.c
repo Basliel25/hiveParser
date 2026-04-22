@@ -5,13 +5,9 @@
 // Number of working threads
 static const int NUMTHREADS = 8;
 
-typedef struct {
-    int thread_id;
-    workQueue_t *queue;
-} thread_args_t;
 
 int main() {
-   FILE *log = fopen("log_data/Linux_2k.log", "r"); 
+   FILE *log = fopen("log_data/data.log", "r"); 
 
    workQueue_t *work_Queue = malloc(sizeof(workQueue_t));
    memset(work_Queue, 0, sizeof(workQueue_t)); 

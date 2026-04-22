@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -Wpedantic -pthread -std=gnu11 -g
 
-SRC = $(wildcard src/*.c src/log_parser/*.c)
+SRC = $(wildcard src/*.c src/log_parser/*.c src/report_parse/*.c)
 OBJ = $(SRC:.c=.o)
 TARGET = hiveParse
 

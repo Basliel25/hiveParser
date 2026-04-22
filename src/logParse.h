@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <time.h>
+#include <limits.h>
 
 /**
 ************************
@@ -51,13 +53,24 @@ typedef struct __workQueue_t {
 * @brief Report Field 
 */
 typedef struct __report_t {
-   char timestamp_range; /**< The time range of the log*/
    int total_log; /**< Amount of total log entries */
    int errors; /**< Amount of errors */
    int warn; /**< Amount of warns */
    int info; /**< Amount of infos */
-   int error_percentage; /**< Error Percentage */
+   int hourly[24]; /**< Hourly ditribution of log */
+   double error_percentage; /**< Error Percentage */
+   time_t earliest, latest; /** Tracking the latest and earliest time stamp.*/
 } report_t;
+
+/**
+* @brief Queue 
+*/
+typedef struct {
+    int thread_id;
+    workQueue_t *queue;
+    report_t thread_report;
+} thread_args_t;
+
 
 /**
 ****************

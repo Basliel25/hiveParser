@@ -7,9 +7,9 @@ char *severity(char *message) {
 
     if(strstr(message, "error"))  {return "Error";}
     if(strstr(message, "authentication failure")) {return "Auth Failure";}
-    if(strstr(message, "succee")) {return "Successus";}
-    if(strstr(message, "connect")) {return "Connection Successful";}
     if(strstr(message, "alert")) {return "alert";}
+    if(strstr(message, "warn")) {return "Warn";}
+    if(strstr(message, "info")) {return "Info";}
     else {return "None";}
 
     return "/0";
