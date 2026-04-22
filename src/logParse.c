@@ -1,13 +1,14 @@
 #include <string.h>
 #include "logParse.h"
 #include "log_parser/parser.h"
+#include "report_parse/report.h"
 
 // Number of working threads
 static const int NUMTHREADS = 8;
 
 
 int main() {
-   FILE *log = fopen("log_data/data.log", "r"); 
+   FILE *log = fopen("log_data/Linux_2k.log", "r"); 
 
    workQueue_t *work_Queue = malloc(sizeof(workQueue_t));
    memset(work_Queue, 0, sizeof(workQueue_t)); 
@@ -38,11 +39,13 @@ int main() {
    // ****************
    // Spin work Threads
    // ****************
+   thread_args_t *args[NUMTHREADS];
    for(int i = 0; i < NUMTHREADS; i++) {
-       thread_args_t *args = malloc(sizeof(thread_args_t));
-       args->thread_id = i;
-       args->queue = work_Queue;
-       pthread_create(&thread[i], NULL, worker_thread, (void *)args);
+       args[i] = malloc(sizeof(thread_args_t));
+       args[i]->thread_id = i;
+       args[i]->queue = work_Queue;
+       report_init(&args[i]->thread_report);
+       pthread_create(&thread[i], NULL, worker_thread, (void *)args[i]);
    }
 
    while (fgets(buffer, sizeof(buffer), log) != NULL) {
@@ -67,7 +70,16 @@ int main() {
        pthread_join(thread[i], NULL);
    }
 
+   // Merge Reports
+   report_t global_report;
+   report_init(&global_report);
+
+   for(int i = 0; i < NUMTHREADS; i++) {
+       merge_report(&global_report, &args[i]->thread_report);  
+       free(args[i]);  
+   }
    printf("All workers finished\n");
+   print_report(&global_report);
    free(work_Queue);
    return 0;
 }
@@ -127,11 +139,10 @@ void *worker_thread(void *arg) {
         pthread_mutex_unlock(&work_queue->lock);
         
         log_entry_t *entry = extract_entry(line);
-        printf("[Worker %d] PID %s: %s\n", tid, entry->pid, entry->message);
+        update_report(entry, &args->thread_report);
         free(entry);
         free(line);
     }
     
-    free(args);
     return NULL;
 }

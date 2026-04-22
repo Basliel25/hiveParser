@@ -5,10 +5,12 @@ char *severity(char *message) {
     for(int i = 0; message[i]; i++)
         message[i] = (unsigned char)tolower(message[i]);
 
-    if(strstr(message, "error"))  {return "Error";}
+    if(strstr(message, "failure") || 
+            strstr(message, "failure"))  {return "Error";}
     if(strstr(message, "authentication failure")) {return "Auth Failure";}
     if(strstr(message, "alert")) {return "alert";}
-    if(strstr(message, "warn")) {return "Warn";}
+    if(strstr(message, "warn") ||
+            strstr(message, "warning")) {return "Warn";}
     if(strstr(message, "info")) {return "Info";}
     else {return "None";}
 

@@ -7,7 +7,7 @@
  * @brief Initialize Sentinel values
  * @param report_t report - The report struct to be created
  */
-void init(report_t *report);
+void report_init(report_t *report);
 
 /**
  * @brief Function to merge reports
@@ -28,7 +28,7 @@ void update_report(log_entry_t *entry, report_t *thread);
  * @brief Display report
  * @param report - A report summary to be parsed into stdout
  */
-void print(report_t *report);
+void print_report(report_t *report);
 
 /**
  * @brief Calculates error percentage
