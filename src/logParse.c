@@ -39,16 +39,6 @@ int main() {
 
    char buffer[1024];  // Fixed size buffer
 
-
-   while (fgets(buffer, sizeof(buffer), log) != NULL) {
-       char *line = strdup(buffer);
-       pthread_mutex_lock(&work_Queue->lock);
-       enqueue(work_Queue, line);
-       pthread_cond_signal(&work_Queue->cond);
-       pthread_mutex_unlock(&work_Queue->lock);
-   }
-
-   printf("Size is of queue is at %d\n", work_Queue->size);
    // ****************
    // Spin work Threads
    // ****************
@@ -58,7 +48,17 @@ int main() {
        args->queue = work_Queue;
        pthread_create(&thread[i], NULL, worker_thread, (void *)args);
    }
+
+   while (fgets(buffer, sizeof(buffer), log) != NULL) {
+       char *line = strdup(buffer);
+       pthread_mutex_lock(&work_Queue->lock);
+       enqueue(work_Queue, line);
+       pthread_cond_signal(&work_Queue->cond);
+       pthread_mutex_unlock(&work_Queue->lock);
+   }
    fclose(log);
+
+   printf("Size is of queue is at %d\n", work_Queue->size);
 
    // Signal workers that no more work is coming
    pthread_mutex_lock(&work_Queue->lock);
@@ -100,6 +100,7 @@ char *dequeue(workQueue_t *queue) {
     queue->size--;
 
     char *line = node->line;
+    free(node);
     return line;
 }
 
@@ -130,7 +131,7 @@ void *worker_thread(void *arg) {
         pthread_mutex_unlock(&work_queue->lock);
         
         log_entry_t *entry = extract_entry(line);
-        printf("[Worker %d] Processed pid: %s\n", tid, entry->pid);
+        printf("[Worker %d] PID %s: %s\n", tid, entry->pid, entry->message);
         free(entry);
         free(line);
     }

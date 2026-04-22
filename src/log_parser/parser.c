@@ -21,34 +21,34 @@ log_entry_t *extract_entry(char *line) {
     // Save Pointer
     char *saveptr;
     // Tokenize input
-    char *token = strtok(line, " ", &saveptr);
+    char *token = strtok_r(line, " ", &saveptr);
     
     // First input is month
     log_entry->month = token;
 
     // Second input is date
-    token = strtok(NULL," ");
+    token = strtok_r(NULL," ", &saveptr);
     log_entry->day = token;
 
     // Third input is timestamp
-    token = strtok(NULL," ");
+    token = strtok_r(NULL," ", &saveptr);
     log_entry->timestamp = token;
 
     // Fourth input is host
-    token = strtok(NULL," ");
+    token = strtok_r(NULL," ", &saveptr);
     log_entry->host = token;
 
     // Next input is component
     // New delimeter
-    token = strtok(NULL,"[");
+    token = strtok_r(NULL,"[", &saveptr);
     log_entry->component = token;
 
     // Next Entry is PID
-    token = strtok(NULL,"]");
+    token = strtok_r(NULL,"]", &saveptr);
     log_entry->pid = token;
 
     // Last Entry is message
-    token = strtok(NULL,":");
+    token = strtok_r(NULL,":", &saveptr);
     // Severity
     log_entry->message = token;
 
