@@ -18,8 +18,10 @@ char *severity(char *message) {
 log_entry_t *extract_entry(char *line) {
     log_entry_t *log_entry = malloc(sizeof(log_entry_t));
 
+    // Save Pointer
+    char *saveptr;
     // Tokenize input
-    char *token = strtok(line, " ");
+    char *token = strtok(line, " ", &saveptr);
     
     // First input is month
     log_entry->month = token;
