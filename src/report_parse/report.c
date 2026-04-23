@@ -1,5 +1,56 @@
 #include "report.h"
 
+static void print_bar(int count, int max, int width) {
+    int filled = (max > 0) ? (count * width / max) : 0;
+    for (int i = 0; i < filled; i++)  printf("█");
+    for (int i = filled; i < width;  i++) printf("░");
+}
+
+void print_report(report_t *report) {
+    double pct = error_percentage(report);
+
+    char start_buf[32], end_buf[32];
+    struct tm tm_s, tm_e;
+    localtime_r(&report->earliest, &tm_s);
+    localtime_r(&report->latest,   &tm_e);
+    strftime(start_buf, sizeof(start_buf), "%b %d %H:%M:%S", &tm_s);
+    strftime(end_buf,   sizeof(end_buf),   "%b %d %H:%M:%S", &tm_e);
+
+    // ── header ───────────────────────────────────────────────────────────────
+    printf("\n");
+    printf(BOLD "  ┌─────────────────────────────────┐\n" RESET);
+    printf(BOLD "  │         HiveParser Report        │\n" RESET);
+    printf(BOLD "  └─────────────────────────────────┘\n" RESET);
+    printf("\n");
+
+    // ── summary ──────────────────────────────────────────────────────────────
+    printf("  Total entries   %d\n", report->total_log);
+    printf("  Timespan        %s  →  %s\n", start_buf, end_buf);
+    printf("\n");
+
+    // ── severity ─────────────────────────────────────────────────────────────
+    printf(BOLD "  Severity\n" RESET);
+    printf(DIM  "  ─────────────────────────────────\n" RESET);
+    printf(RED    "  Error    %6d  (%.1f%%)\n" RESET, report->errors, pct * 100.0);
+    printf(YELLOW "  Warn     %6d\n" RESET, report->warn);
+    printf(CYAN   "  Info     %6d\n" RESET, report->info);
+    printf("\n");
+
+    // ── hourly distribution ──────────────────────────────────────────────────
+    int max_hour = 0;
+    for (int i = 0; i < 24; i++)
+        if (report->hourly[i] > max_hour) max_hour = report->hourly[i];
+
+    printf(BOLD "  Hourly Distribution\n" RESET);
+    printf(DIM  "  ─────────────────────────────────\n" RESET);
+    for (int i = 0; i < 24; i++) {
+        printf("  %02dh  ", i);
+        print_bar(report->hourly[i], max_hour, 28);
+        printf(DIM "  %d\n" RESET, report->hourly[i]);
+    }
+    printf("\n");
+}
+
 void report_init(report_t *report) {
     memset(report, 0, sizeof(report_t));
     report->earliest = LLONG_MAX;
@@ -22,30 +73,6 @@ void merge_report(report_t *master, report_t *thread) {
 
 double error_percentage(report_t *report) {
     return (double) report->errors / (double) report->total_log;
-}
-
-void print_report(report_t *report) {
-    double pct = error_percentage(report);
-    printf("=== Log Report ===\n");
-    printf("Total entries: %d\n", report->total_log);
-    printf("Errors: %d (%.1f%%)\n", report->errors, pct);
-    printf("Warnings: %d\n", report->warn);
-    printf("Info: %d\n", report->info);
-
-    struct tm *tm = localtime(&report->earliest);
-    printf("Spanning from : %04d-%02d-%02d %02d:%02d:%02d\n",
-            tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
-            tm->tm_hour, tm->tm_min, tm->tm_sec);
-
-    struct tm *tm1 = localtime(&report->latest);
-    printf("To: %04d-%02d-%02d %02d:%02d:%02d\n",
-            tm1->tm_year + 1900, tm1->tm_mon + 1, tm1->tm_mday,
-            tm1->tm_hour, tm1->tm_min, tm1->tm_sec);
-
-    printf("Hourly distribution:\n");
-    for(int i = 0; i < 24; i++) {
-        printf("  Hour %02d: %d\n", i, report->hourly[i]);
-    }
 }
 
 time_t reconstruct_ts(log_entry_t *entry) {

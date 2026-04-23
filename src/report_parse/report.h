@@ -1,7 +1,20 @@
 #ifndef REPORT
 #define REPORT
 #define _XOPEN_SOURCE
+// ANSI helpers
+#define RESET   "\033[0m"
+#define BOLD    "\033[1m"
+#define RED     "\033[31m"
+#define YELLOW  "\033[33m"
+#define CYAN    "\033[36m"
+#define DIM     "\033[2m"
+
 #include "../logParse.h"
+
+
+/** @brief Simple print helper
+ */
+static void print_bar(int count, int max, int width);
 
 /**
  * @brief Initialize Sentinel values
