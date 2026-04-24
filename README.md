@@ -1,11 +1,7 @@
-  # HiveParser
+# HiveParser
 
-/** @brief Simple print helper
-* @brief Simple print helper
-
-Concurrent syslog parser in C. Reads a log file, distributes lines across N worker threads, and reports severity counts, error rate, and hourly distribution.
-
-Producer/consumer over a mutex-protected linked-list queue. Clean shutdown via `pthread_cond_broadcast`. Each worker accumulates a local `report_t` — no per-line locking — and flushes to the global result at exit.
+A concurrent syslog parser in written from scratch in C. The program parses a provided log data, and spawns multiple workers that concurrently parse the log from a shared work pull.
+Producer/consumer architecture is managed over a mutex-protected linked-list queue. Work is signaled via `pthread_cond_broadcast`. Each worker accumulates a local `report_t` and flushes to the global result at exit.
 
 ---
 
@@ -76,47 +72,4 @@ docker run --rm -v $(pwd)/log_data:/app/log_data hiveparse log_data/Linux_2k.log
 ```
 
 ---
-
-## Core structs
-
-```c
-typedef struct node {
-    char        *line;
-    struct node *next;
-} Node;
-
-typedef struct {
-    Node            *head, *tail;
-    int              size;
-    int              flag;   /* 1 = producer done */
-    pthread_mutex_t  lock;
-    pthread_cond_t   cond;
-} workQueue_t;
-
-typedef struct {
-    int     total_log;
-    int     errors, warn, info;
-    double  error_percentage;
-    int     hourly[24];
-    time_t  earliest, latest;
-} report_t;
-```
-
----
-
-## Status
-
-| Version | |
-|---|---|
-| v0.1 — single-threaded reader | ✅ |
-| v0.2 — syslog parser | ✅ |
-| v0.3 — threaded queue | ✅ |
-| v0.4 — clean shutdown | ✅ |
-| v0.5 — aggregated report | 🔧 |
-| v1.0 — stable release | ⬜ |
-| v1.1 — named pipe output | ⬜ |
-| v2.0 — ncurses TUI | ⬜ |
-
----
-
 Tested against the [loghub Linux.log](https://github.com/logpai/loghub) dataset — ~117k lines of real syslog data.
