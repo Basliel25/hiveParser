@@ -12,9 +12,6 @@
 #include "../logParse.h"
 
 
-/** @brief Simple print helper
- */
-static void print_bar(int count, int max, int width);
 
 /**
  * @brief Initialize Sentinel values

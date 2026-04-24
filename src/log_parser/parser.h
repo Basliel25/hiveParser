@@ -14,5 +14,5 @@ char *severity(char *message);
 * @param char *line - Entry from log to be processed
 * @return log_entry_t struct with organized data about entry
 */
-log_entry_t *extract_entry(char *line);
+void extract_entry(char *line, log_entry_t *entry);
 #endif

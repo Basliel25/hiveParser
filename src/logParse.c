@@ -138,9 +138,9 @@ void *worker_thread(void *arg) {
         line = dequeue(work_queue);
         pthread_mutex_unlock(&work_queue->lock);
         
-        log_entry_t *entry = extract_entry(line);
-        update_report(entry, &args->thread_report);
-        free(entry);
+        log_entry_t entry;
+        extract_entry(line, &entry);
+        update_report(&entry, &args->thread_report);
         free(line);
     }
     
