@@ -1,5 +1,7 @@
 # HiveParser
 
+Read More on: [Here](https://basz-website.basgug25.workers.dev/projects/hive-parser/)
+
 A concurrent syslog parser in written from scratch in C. The program parses a provided log data, and spawns multiple workers that concurrently parse the log from a shared work pull.
 Producer/consumer architecture is managed over a mutex-protected linked-list queue. Work is signaled via `pthread_cond_broadcast`. Each worker accumulates a local `report_t` and flushes to the global result at exit.
 
