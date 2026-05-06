@@ -18,7 +18,7 @@
 /**
 * @brief Log entry 
 */
-typedef struct __log_entry_t {
+typedef struct log_entry_s {
     char *month;
     char *day;
     char *timestamp;
@@ -40,7 +40,7 @@ typedef struct Node {
 /**
 * @brief Queue 
 */
-typedef struct __workQueue_t {
+typedef struct workQueue_s {
     struct Node *head; /**< Points to start of list */
     struct Node *tail; /**< Points to end of list */
     int size; /**< Size of list */
@@ -52,7 +52,7 @@ typedef struct __workQueue_t {
 /**
 * @brief Report Field 
 */
-typedef struct __report_t {
+typedef struct report_s {
    int total_log; /**< Amount of total log entries */
    int errors; /**< Amount of errors */
    int warn; /**< Amount of warns */
