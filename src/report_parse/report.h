@@ -1,6 +1,5 @@
 #ifndef REPORT
 #define REPORT
-#define _XOPEN_SOURCE
 // ANSI helpers
 #define RESET   "\033[0m"
 #define BOLD    "\033[1m"

@@ -31,6 +31,7 @@ int main() {
 
    if (log == NULL) {
     perror("Error opening file");
+    free(work_Queue);
     return 1;
    }
 

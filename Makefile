@@ -21,5 +21,4 @@ docs:
 	@echo "Docs generated at docs/html/index.html"
 
 tidy:
-	clang-tidy $(SRC) -- $(CFLAGS) -Iinclude
-
+	clang-tidy $(SRC) 

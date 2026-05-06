@@ -1,3 +1,4 @@
+#define _XOPEN_SOURCE
 #include "report.h"
 
 static void print_bar(int count, int max, int width) {
@@ -92,9 +93,9 @@ void update_report(log_entry_t *entry, report_t *thread) {
     
     // Handle severity reports
     if(entry->severity != NULL){
-        if(strstr(entry->severity, "Error")) {thread->errors += 1;}
-        if(strstr(entry->severity, "Warn")) {thread->warn += 1;}
-        if(strstr(entry->severity, "Info")) {thread->info += 1;}
+        if(strcmp(entry->severity, "Error") == 0) {thread->errors += 1;}
+        if(strcmp(entry->severity, "Warn") == 0) {thread->warn += 1;}
+        if(strcmp(entry->severity, "Info") == 0) {thread->info += 1;}
     }
 
     // Construct time stamp into time_t to calculate latest and earliest
